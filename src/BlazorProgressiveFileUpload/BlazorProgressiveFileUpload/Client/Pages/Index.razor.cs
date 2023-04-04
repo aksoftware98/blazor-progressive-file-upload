@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Microsoft.JSInterop;
 using BlazorProgressiveFileUpload.Client;
 using BlazorProgressiveFileUpload.Client.Shared;
+using System.Net.Http.Headers;
+using System.Reflection.PortableExecutable;
+using System.IO;
 
 namespace BlazorProgressiveFileUpload.Client.Pages
 {
@@ -20,30 +23,15 @@ namespace BlazorProgressiveFileUpload.Client.Pages
     {
 
 		[Inject]
-		public HttpClient Client { get; set; } = default!;
+		public HttpClient Client { get; set; }
 
 		// Create a global variable that will be used by OnChooseFile and UploadAsync methods
-		private Stream? _fileStream = null;
-		private string? _selectedFileName = null;
+		private IBrowserFile? _selectedFile = null;
 
 		public void OnChooseFile(InputFileChangeEventArgs e)
 		{
-			// Get the selected file
-			var file = e.File;
-
-			// Check if the file is null then return from the method
-			if (file == null)
-				return;
-
-			// Validate the extension if required Client-Side)
-
-			// Set the value of the stream by calling OpenReadStream and pass the maximum number of bytes allowed because by default it only allows 512KB
-			// I used the value 5000000 which is about 50MB
-			using (var stream = file.OpenReadStream(50000000))
-			{
-				_fileStream = stream;
-				_selectedFileName = file.Name;
-			}
+            // Get the selected file
+            _selectedFile = e.File;
 		}
 
 		private long _uploaded = 0;
@@ -54,23 +42,29 @@ namespace BlazorProgressiveFileUpload.Client.Pages
 			// Create a multipart form data content which will hold the key value of the file that must be of type StreamContent
 			var content = new MultipartFormDataContent();
 
-			// Create an instance of ProgressiveStreamContent that we just created and we will pass the stream of the file for it
-			// and the 40096 which are 40KB per packet and the third argument which as a callback for the OnProgress event (u, p) are u = Uploaded bytes and P is the percentage
-			var streamContent = new ProgressiveStreamContent(_fileStream, 40096, (u, p) =>
+			if (_selectedFile == null)
+				return;
+
+			using (var fileStream = _selectedFile.OpenReadStream(5000000))
 			{
-				// Set the values of the _uploaded & _percentage fields to the value provided from the event
-				_uploaded = u;
-				_percentage = p;
+                // and the 40096 which are 40KB per packet and the third argument which as a callback for the OnProgress event (u, p) are u = Uploaded bytes and P is the percentage
+                var streamContent = new ProgressiveStreamContent(fileStream, 40096, (u, p) =>
+                {
+                    // Set the values of the _uploaded & _percentage fields to the value provided from the event
+                    _uploaded = u;
+                    _percentage = p;
 
-				// Call StateHasChanged() to notify the component about this change to re-render the UI
-				StateHasChanged();
-			});
+                    // Call StateHasChanged() to notify the component about this change to re-render the UI
+                    StateHasChanged();
+                });
 
-			// Add the streamContent with the name to the FormContent variable
-			content.Add(streamContent, "File");
+                // Add the streamContent with the name to the FormContent variable
+                content.Add(streamContent, "file", _selectedFile.Name);
 
-			// Submit the request
-			var response = await Client.PostAsync("/weatherforecast", streamContent);
+                // Submit the request
+                var response = await Client.PostAsync("weatherforecast", content);
+            }
+          
 		}
 	}
 }

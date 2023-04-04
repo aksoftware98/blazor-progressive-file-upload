@@ -32,7 +32,7 @@ namespace BlazorProgressiveFileUpload.Server.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> Upload([FromForm] IFormFile file)
+		public async Task<IActionResult> Upload([FromForm] IFormFile? file)
 		{
 			// Check if the file is there
 			if (file == null)
