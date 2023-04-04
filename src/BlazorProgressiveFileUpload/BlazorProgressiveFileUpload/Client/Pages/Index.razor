@@ -2,8 +2,20 @@
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Welcome to C# Corner</h1>
+<p>Learn how to upload a file from Blazor WebAssembly to the an ASP.NET Core Web API with progress</p>
 
-Welcome to your new app.
-
-<SurveyPrompt Title="How is Blazor working for you?" />
+<div class="row">
+    <div class="col-4">
+        <div class="form-group">
+            <label>File</label>
+            <InputFile OnChange="OnChooseFile" />
+            @* Show the value of the _uploaded variable divided to 1024 to show the amount in KB and also we use _fileStream?.Length / 1024 to show the total amount of KBs  *@
+            <p>@(_uploaded / 1024)KB / @(_fileStream?.Length / 1024)KB</p>
+            @* Show the percentage of uploaded amount of of the total *@
+            <p>Percentage: @_percentage %</p>
+        </div>
+        @* Call the SubmitFileAsync in the @onclick event *@
+        <button type="submit" class="btn btn-success btn-block m-1" @onclick="SubmitFileAsync">Upload</button>
+    </div>
+</div>
