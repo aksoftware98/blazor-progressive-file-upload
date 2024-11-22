@@ -36,7 +36,7 @@ namespace BlazorProgressiveFileUpload.Client
             {
 
                 // In this part of code here in every loop we read a chunk of bytes and write them to the stream of the HttpContent
-                var length = await _fileStream.ReadAsync(buffer, 0, _maxBuffer);
+                var length = await _fileStream.ReadAsync(buffer.AsMemory(0, MaxBuffer));
                 // Check if the amount of bytes read recently, if there is no bytes read break the loop
                 if (length <= 0)
                 {
@@ -49,7 +49,7 @@ namespace BlazorProgressiveFileUpload.Client
                 var percentage = Convert.ToDouble(uploaded * 100 / _fileStream.Length);
 
                 // Write the bytes to the HttpContent stream
-                await stream.WriteAsync(buffer);
+                await stream.WriteAsync(buffer.AsMemory(0, length));
 
                 // Fire the event of OnProgress to notify the client about progress so far
                 OnProgress?.Invoke(uploaded, percentage);
